@@ -24,19 +24,36 @@
 
 ### Virtualization
 
-TODO: Explain how `TransactionList.jsx` now renders rows through `react-window` v2 `List` with `rowComponent` and `rowProps`.
+After inspection I updated `TransactionList.jsx` to use `react-window`'s
+`FixedSizeList` (v2) API. The list now renders only the visible rows by:
+
+- Passing a fixed `height` (644) and `itemSize` (84) to the `FixedSizeList`.
+- Using `itemData` (memoized via `useMemo`) to provide `{ transactions, onSelect }` to each row.
+- Rendering a `Row` renderer that receives `{ index, style, data }` and maps
+  the index to the transaction object, forwarding `style` to the `TransactionRow`.
+
+This replaces the previous non-standard props and ensures react-window controls
+the DOM nodes created (only ~visible items are mounted at any time).
 
 ### React.memo
 
-TODO: Explain how `TransactionRow.jsx` is wrapped in `React.memo` so unchanged rows can skip re-rendering.
+`TransactionRow.jsx` is exported wrapped in `React.memo`. This ensures a row
+component will skip re-rendering when its props (`transaction`, `style`,
+`onSelect`) are referentially equal to the previous render.
 
 ### useCallback
 
-TODO: Explain how `Transactions.jsx` now memoizes the row selection handler with `useCallback`.
+The parent `Transactions.jsx` memoizes the row selection handler with `useCallback`:
+`const handleSelect = useCallback((id) => setSelectedId(id), []);`.
+This provides a stable `onSelect` function reference so `React.memo` on rows
+is not defeated by a changing handler reference.
 
 ### useMemo
 
-TODO: Explain how `useTransactions.js` caches `filteredTransactions` with `useMemo`.
+`useTransactions.js` already memoizes the `filteredTransactions` computed value
+with `useMemo`, using `[transactions, filter]` as dependencies. This ensures the
+expensive `.filter()` runs only when the transactions array or the filter
+string change.
 
 ## Results Table
 
@@ -46,6 +63,15 @@ TODO: Explain how `useTransactions.js` caches `filteredTransactions` with `useMe
 | Keystroke re-render time             | TODO   | TODO  | TODO        |
 | Components re-rendered per keystroke | TODO   | TODO  | TODO        |
 | DOM nodes in list                    | TODO   | TODO  | TODO        |
+
+### How to measure
+
+- Initial render time: open the app with an empty cache, start a Profiler recording immediately after load completes, and note the "Total time" in the profiler summary for the initial render pass.
+- Keystroke re-render time: in the Profiler, click Record, type a single character into the search input, stop recording, and note the "Total time" for that interaction.
+- Components re-rendered per keystroke: read the number of renders/components highlighted in the flame chart for that recorded interaction.
+- DOM nodes in list: open Chrome DevTools → Elements, find the list container, and count the number of row DOM nodes present (before virtualization should be ~2000, after virtualization should be ~15).
+
+Fill the table with exact numbers from these measurements and commit `screenshots/baseline-profiler.png` and `screenshots/after-profiler.png` alongside the report.
 
 ## Reflection
 
