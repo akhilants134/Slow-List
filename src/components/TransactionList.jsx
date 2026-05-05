@@ -8,6 +8,19 @@ const TransactionList = ({ transactions, onSelect }) => {
     [transactions, onSelect],
   );
 
+  const Row = ({ index, style, ariaAttributes, transactions, onSelect }) => {
+    const transaction = transactions[index];
+
+    return (
+      <TransactionRow
+        transaction={transaction}
+        onSelect={onSelect}
+        style={style}
+        ariaAttributes={ariaAttributes}
+      />
+    );
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col h-[700px]">
       <div className="flex-1 min-h-0">
@@ -17,7 +30,7 @@ const TransactionList = ({ transactions, onSelect }) => {
             defaultHeight={644}
             rowCount={transactions.length}
             rowHeight={84}
-            rowComponent={TransactionRow}
+            rowComponent={Row}
             rowProps={itemData}
           />
         ) : (
